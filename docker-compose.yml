@@ -1,0 +1,32 @@
+version: "2.1"
+# forked from - https://www.czerniga.it/2022/06/08/how-install-teamcity-server-using-docker-compose/
+#
+# adds privileged: true & user:root to server and agent
+# for NodeJS projects to be "compatible" configurations:
+# ## added the docker.sock and /var/lib/docker/ to the agent Volumes
+# ! also performed the following on the HOST (macbook), since /var/run/docker.sock was in under /var/run (installed via Docker Desktop)
+# ## sudo ln -s /home/${user}/.docker/desktop/docker.sock /var/run/docker.sock
+
+services:
+  server:
+    image: jetbrains/teamcity-server:${TEAMCITY_VERSION}
+    privileged: true
+    user: root
+    ports:
+      - "8111:8111"
+    volumes:
+      - ./datadir:/data/teamcity_server/datadir
+      - ./logs:/opt/teamcity/logs
+  agent:
+    image: jetbrains/teamcity-agent:${TEAMCITY_VERSION}
+    privileged: true
+    user: root
+    volumes:
+      - ./agent_conf:/data/teamcity_agent/conf
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "/var/lib/docker:/var/lib/docker"
+      # - "./buildagent:/opt/buildagent" # runs fine without this except can't fully mount nodejs docker image inside..
+    environment:
+      - SERVER_URL=http://server:8111
+
+      # 
